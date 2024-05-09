@@ -3,9 +3,11 @@
 #include <ntifs.h>
 #include <ntddndis.h> // 这个必须放ntifs.h后面
 
+#include "HWIDChanger.h"
+
 #define IOCTL_NSI_PROXY_ARP (0x0012001B)
 #define NSI_PARAMS_ARP (11)
-#include "HWIDChanger.h"
+
 
 namespace Nic
 {
