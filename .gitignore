@@ -1,0 +1,102 @@
+# Visual Studio 文件夹
+.vs/
+
+# 编译输出文件夹
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio 代码覆盖结果
+*.coveragexml
+
+# NCrunch
+_NCrunch_*
+.*crunch*.local.xml
+nCrunchTemp_*
+
+# MightyMoose
+*.mm.*
+AutoTest.Net/
+
+# Web workbench (sass)
+.sass-cache/
+
+# Installshield 输出文件夹
+[Ee]xpress/
+
+# DocProject 是一个文档生成器工具
+DocProject/buildhelp/
+DocProject/Help/*.HxT
+DocProject/Help/*.HxC
+DocProject/Help/*.hhc
+DocProject/Help/*.hhk
+DocProject/Help/*.hhp
+DocProject/Help/Html2
+DocProject/Help/html
+
+# 单元测试结果
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+# NUnit
+*.VisualState.xml
+TestResult.xml
+nunit-*.xml
+
+# 编译结果
+[Dd]ebugPS/
+[Rr]eleasePS/
+dlldata.c
+
+# Benchmark 结果
+BenchmarkDotNet.Artifacts/
+
+# .NET Core
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+# StyleCop
+StyleCopReport.xml
+
+# Visual Studio 缓存文件
+# 如果不需要缓存文件，请取消注释这些行
+#[Cc]ache/
+#[Tt]humbs.db
+
+# 临时文件
+[Tt]emp/
+
+# NuGet 包目录
+[Pp]ackages/
+# 除非你需要手动修改 csproj 文件，否则不要取消注释这一行
+#![Pp]ackages/build/
+# Uncomment if necessary however generally it will be regenerated when needed
+#!**/[Pp]ackages/repositories.config
+# NuGet v3 生成的文件
+*.nuget.props
+*.nuget.targets
+
+# Visual Studio 缓存文件
+*.VC.db
+*.VC.VC.opendb
+
+# Windows 缩略图缓存
+Thumbs.db
+
+# Mac 桌面服务存储文件
+.DS_Store
