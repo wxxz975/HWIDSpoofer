@@ -6,19 +6,20 @@
 namespace Utils
 {
 	PVOID GetModuleBase(const char* moduleName);
-	bool CheckMask(const char* base, const char* pattern, const char* mask);
+	BOOL CheckMask(const char* base, const char* pattern, const char* mask);
 	PVOID FindPattern(PVOID base, int length, const char* pattern, const char* mask);
 	PVOID FindPatternImage(PVOID base, const char* pattern, const char* mask);
-	void RandomText(char* text, const int length);
-	VOID SpoofBuffer(DWORD seed, PBYTE buffer, DWORD length);
-
-	BOOL SwapControl(PUNICODE_STRING pDriverName, PVOID hook, PVOID original);
-
-	BOOL AppendSwap(PUNICODE_STRING pDriverName, PVOID pSwap, PVOID hook, PVOID original);
-
 	
 
-#define AdjustOffset(OriAddr, Offset) ((PBYTE)OriAddr + Offset)
+	VOID RandomText(char* text, const int length);
+	VOID RandomizeString(char* string);
+
+	VOID SpoofBuffer(DWORD seed, PBYTE buffer, DWORD length);
+
+	BOOL SwapControl(wchar_t* driverName, PVOID hookFunc, PVOID* originalFunc);
+
+
+#define AdjustOffset(OriAddr, Offset) (PBYTE)OriAddr + Offset
 
 	// 将这个OriAddr指针增加一个Offset的偏移，并且重新解释为T类型
 	template<class T>

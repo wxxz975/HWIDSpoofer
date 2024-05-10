@@ -132,3 +132,4 @@ The author assumes no liability for any direct or indirect damages arising from 
 - [mutante](https://github.com/SamuelTulach/mutante.git)
 - [hwid](https://github.com/btbd/hwid)
 - [EASY-HWID-SPOOFER](https://github.com/FiYHer/EASY-HWID-SPOOFER)
+- [Smbios manual](https://www.dmtf.org/standards/smbios)

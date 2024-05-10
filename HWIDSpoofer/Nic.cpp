@@ -6,7 +6,7 @@
 
 namespace Nic
 {
-	static DWORD SEED = 0;
+	static DWORD SEED = 0x7899;
 
 	PDRIVER_DISPATCH NsiControlOriginal = 0;
 
@@ -89,7 +89,7 @@ namespace Nic
 
 		return 0;
 	}
-	PWCHAR TrimGUID(PWCHAR guid, DWORD max) {
+	static PWCHAR TrimGUID(PWCHAR guid, DWORD max) {
 		DWORD i = 0;
 		PWCHAR start = guid;
 
@@ -391,7 +391,7 @@ namespace Nic
 			log("block:0x%llp\n", block);
 
 			PWCHAR InstanceName = (PWCHAR)SafeCopy(filter->FilterInstanceName->Buffer, MAX_PATH);
-			if (InstanceName == NULL) {
+			if (InstanceName == nullptr) {
 				err("failed to copy buffer. Line: %d\n", __LINE__);
 				if (filter == filter->NextFilter) break;
 				continue;
@@ -448,7 +448,7 @@ namespace Nic
 #ifdef __HOOK_DISPATCH_CUSTOM__
 				Utils::AppendSwap(&driver->DriverName, &driver->MajorFunction[IRP_MJ_DEVICE_CONTROL], NICControl, nic->Original);
 #else 
-				Utils::AppendSwap(&driver->DriverName, &driver->MajorFunction[IRP_MJ_DEVICE_CONTROL], ndisDummyIrpHandler, nic->Original);
+				//Utils::AppendSwap(&driver->DriverName, &driver->MajorFunction[IRP_MJ_DEVICE_CONTROL], ndisDummyIrpHandler, nic->Original);
 #endif
 				++NICs.Length;
 			}
@@ -540,20 +540,135 @@ namespace Nic
 	{
 		if (m_ndisBase == nullptr || m_ndisGlobalFilterList == nullptr || m_ndisDummyIrpHandler == nullptr)
 		{
-			log("Please init NIC Module first!");
+			err("Please init NIC Module first!\n");
 			ShowAllAddress();
 			return false;
 		}
 
+		if (!ChangeMacAddress()) {
+			err("Failed to Execute ChangeMacAddress!\n");
+			
+			return false;
+		}
 
 
-		return false;
+		return true;
 	}
 
 	void NICManager::ShowAllAddress()
 	{
-		log("\n m_ndisBase:%llx \n m_ndisGlobalFilterList:%llx \n m_ndisDummyIrpHandler:%llx",
+		log("\n m_ndisBase:%llx \n m_ndisGlobalFilterList:%llx \n m_ndisDummyIrpHandler:%llx\n",
 			m_ndisBase, m_ndisGlobalFilterList, m_ndisDummyIrpHandler);
+	}
+
+	static VOID ShowMacAddress(const PIF_PHYSICAL_ADDRESS_LH addr) {
+
+		log("MacAddress:");
+		for (int idx = 0; idx < addr->Length; ++idx) {
+			log("%02X", addr->Address[idx]);
+			if (idx < addr->Length - 1)
+				log("-");
+		}
+		log("\n");
+	}
+
+	bool NICManager::ChangeMacAddress() const
+	{
+		DWORD count = 0;
+		for (PNDIS_FILTER_BLOCK filter = *reinterpret_cast<PNDIS_FILTER_BLOCK*>(m_ndisGlobalFilterList); 
+			filter; 
+			filter = filter->NextFilter) 
+		{
+
+			log("filter Addr:0x%llp\n", filter);
+			PNDIS_IF_BLOCK block = filter->IfBlock;
+			if (block == nullptr)
+			{
+				if (filter == filter->NextFilter) break;
+				continue;
+			}
+
+			PWCHAR InstanceName = (PWCHAR)SafeCopy(filter->FilterInstanceName->Buffer, MAX_PATH);
+			if (InstanceName == nullptr) {
+				err("failed to copy buffer.\n");
+				if (filter == filter->NextFilter) break;
+				continue;
+			}
+			log("InstanceName: %ws\n", InstanceName);
+
+			WCHAR adapter[MAX_PATH] = { 0 };
+			swprintf(adapter, L"\\Device\\%ws", TrimGUID(InstanceName, MAX_PATH / 2));
+			ExFreePool(InstanceName);
+
+			log("found NIC %ws\n", adapter);
+
+			/*
+			UNICODE_STRING name = { 0 };
+			RtlInitUnicodeString(&name, adapter);
+
+			PFILE_OBJECT file = 0;
+			PDEVICE_OBJECT device = 0;
+
+			NTSTATUS status = IoGetDeviceObjectPointer(&name, FILE_READ_DATA, &file, &device);
+			if (!NT_SUCCESS(status)) {
+				err("! failed to get %wZ: %p !Line:%d\n", &name, status, __LINE__);
+				if (filter == filter->NextFilter) break;
+				continue;
+			}
+			log("Success to GetDeviceObjectPointer: 0x%llp, Name:%ws\n", device, name.Buffer);
+
+			PDRIVER_OBJECT driver = device->DriverObject;
+			if (driver == NULL)
+			{
+				err("failed to get the Driver Object\n");
+				if (filter == filter->NextFilter) break;
+				continue;
+			}
+			log("Success to Get driver Object: 0x%llp !\n", driver);
+
+			BOOL exists = FALSE;
+			for (DWORD i = 0; i < NICs.Length; ++i) {
+				if (NICs.Drivers[i].DriverObject == driver) {
+					exists = TRUE;
+					log("Success to find driver:0x%llp [%d]!\n", NICs.Drivers[i].DriverObject, i);
+					break;
+				}
+			}
+
+			if (exists) {
+				log("%wZ already swapped\n", &driver->DriverName);
+			}
+			else {
+				PNIC_DRIVER nic = &NICs.Drivers[NICs.Length];
+				nic->DriverObject = driver;
+
+#ifdef __HOOK_DISPATCH_CUSTOM__
+				Utils::AppendSwap(&driver->DriverName, &driver->MajorFunction[IRP_MJ_DEVICE_CONTROL], NICControl, nic->Original);
+#else 
+				//Utils::AppendSwap(&driver->DriverName, &driver->MajorFunction[IRP_MJ_DEVICE_CONTROL], m_ndisDummyIrpHandler, nic->Original);
+#endif
+				++NICs.Length;
+			}
+
+			// Indirectly dereferences device object
+			ObDereferenceObject(file);
+			*/
+
+			// Current MAC
+			PIF_PHYSICAL_ADDRESS_LH addr = &block->ifPhysAddress;
+			Utils::SpoofBuffer(SEED, addr->Address, addr->Length);
+			ShowMacAddress(addr);
+
+			addr = &block->PermanentPhysAddress;
+			Utils::SpoofBuffer(SEED, addr->Address, addr->Length);
+			ShowMacAddress(addr);
+
+			++count;
+		}
+
+		log("handled %d MACs\n", count);
+		
+		return true;
 	}
 
 };

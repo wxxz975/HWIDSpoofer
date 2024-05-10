@@ -8,19 +8,6 @@
 
 namespace Utils
 {
-
-	typedef struct _SWAP {
-		UNICODE_STRING Name;
-		PVOID* Swap;
-		PVOID Original;
-	} SWAP, * PSWAP;
-
-	static struct {
-		SWAP Buffer[0xFF];
-		ULONG Length;
-	} SWAPS = { 0 };
-
-
 	PCHAR LowerStr(PCHAR str) {
 		for (PCHAR s = str; *s; ++s) {
 			*s = (CHAR)tolower(*s);
@@ -73,7 +60,7 @@ namespace Utils
 	 * \param mask Mask containing unknown bytes
 	 * \return
 	 */
-	bool CheckMask(const char* base, const char* pattern, const char* mask)
+	BOOL CheckMask(const char* base, const char* pattern, const char* mask)
 	{
 		for (; *mask; ++base, ++pattern, ++mask)
 		{
@@ -141,7 +128,7 @@ namespace Utils
 	 * \param text Pointer to text
 	 * \param length Desired length
 	 */
-	void RandomText(char* text, const int length)
+	VOID RandomText(char* text, const int length)
 	{
 		if (!text)
 			return;
@@ -160,54 +147,59 @@ namespace Utils
 		}
 	}
 
-
-	BOOL AppendSwap(PUNICODE_STRING pDriverName, PVOID pSwap, PVOID hook, PVOID original)
+	VOID RandomizeString(char* string)
 	{
-		PSWAP _s = &SWAPS.Buffer[SWAPS.Length++];
-		original = *(PVOID*)pSwap;
-		_s->Original = InterlockedExchangePointer((PVOID*)(_s->Swap = (PVOID*)pSwap), (PVOID)hook);
-		_s->Name = *pDriverName;
-
-		log("swapped %wZ\n", pDriverName);
-		return TRUE;
+		const auto len = static_cast<int>(strlen(string));
+		Utils::RandomText(string, len - 1);
+		string[len] = '\0';
 	}
 
 
 	extern "C" POBJECT_TYPE * IoDriverObjectType;
-	BOOL SwapControl(PUNICODE_STRING pDriverName, PVOID hook, PVOID original)
+
+	static BOOL SwapControl(wchar_t* driverNameStr, PVOID hookFunc, PVOID* originalFunc)
 	{
-		PDRIVER_OBJECT object = 0;
-		NTSTATUS status = ObReferenceObjectByName(pDriverName, OBJ_CASE_INSENSITIVE, 0, 0, *IoDriverObjectType, KernelMode, 0, (PVOID*)&object);
+		UNICODE_STRING DriverName;
+		RtlInitUnicodeString(&DriverName, driverNameStr);
 
-		//Log::Print("[+] Device Control addr:%llp\n", &object->MajorFunction[IRP_MJ_DEVICE_CONTROL]);
-		//Log::Print("[+] Original Device Control:%llp\n", object->MajorFunction[IRP_MJ_DEVICE_CONTROL]);
-		//Log::Print("[+] Original Hook Func:%llp\n", hook);
-		// device control offset EAD780 relate to nvlddmkm base 
-		//return TRUE;
-
-		if (NT_SUCCESS(status)) {
-			AppendSwap(pDriverName, &object->MajorFunction[IRP_MJ_DEVICE_CONTROL], hook, original);
-
-			//Log::Print("[+] changed: %llp\n", *(PVOID*)original);
-			//Log::Print("[+] changed: %llp\n", object->MajorFunction[IRP_MJ_DEVICE_CONTROL]);
-			ObDereferenceObject(object);
-
-			return TRUE;
-		}
-		else {
-			err("! failed to get %wZ: %p !\n", pDriverName, status);
+		PDRIVER_OBJECT driver_object = 0;
+		NTSTATUS status = ObReferenceObjectByName(&DriverName, OBJ_CASE_INSENSITIVE, 0, 0, *IoDriverObjectType, KernelMode, 0, (PVOID*)&driver_object);
+		if (!NT_SUCCESS(status)) {
+			err("Failed to find the driver object!");
 			return FALSE;
 		}
+		
+		PDRIVER_DISPATCH originalDispatch = (PDRIVER_DISPATCH)InterlockedExchangePointer(
+			(PVOID*)&driver_object->MajorFunction[IRP_MJ_DEVICE_CONTROL],
+			(PVOID)hookFunc
+		);
+
+		if (originalDispatch == nullptr) {
+			// if something err, restore the function
+			InterlockedExchangePointer(
+				(PVOID*)&driver_object->MajorFunction[IRP_MJ_DEVICE_CONTROL],
+				(PVOID)originalDispatch
+			);
+			err("Failed to ExchangePointer!");
+
+			return FALSE;
+		}
+
+		*originalFunc = originalDispatch;
+
+		ObDereferenceObject(driver_object);
+
+		return TRUE;
 	}
 
 
-	DWORD Random(PDWORD seed) {
+	static DWORD Random(PDWORD seed) {
 		DWORD s = *seed * 1103515245 + 12345;
 		*seed = s;
 		return (s / 65536) % 32768;
 	}
 
-	DWORD Hash(PBYTE buffer, DWORD length) {
+	static DWORD Hash(PBYTE buffer, DWORD length) {
 		if (!length) {
 			return 0;
 		}

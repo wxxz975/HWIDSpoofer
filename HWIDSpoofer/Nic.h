@@ -68,12 +68,10 @@ namespace Nic
 		struct _NDIS_FILTER_BLOCK* NextFilter; // 0x8
 		UCHAR _padding_1[0x18];	//0x10
 		PKSTRING FilterInstanceName; // 0x28
-		UCHAR _padding_2[0x280];
+		UCHAR _padding_2[0x290];
 		PNDIS_IF_BLOCK IfBlock;
 	} NDIS_FILTER_BLOCK, * PNDIS_FILTER_BLOCK;
 
-
-	
 
 	typedef struct _IOC_REQUEST {
 		PVOID Buffer;
@@ -130,6 +128,10 @@ namespace Nic
 		void ShowAllAddress() override;
 
 	private:
+
+		bool ChangeMacAddress() const;
+
+	private:
 		PVOID m_ndisBase = nullptr;
 
 		/// <summary>
@@ -138,7 +140,6 @@ namespace Nic
 		PVOID m_ndisGlobalFilterList = nullptr;
 
 		PVOID m_ndisDummyIrpHandler = nullptr;
-
 	};
 
 }

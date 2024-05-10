@@ -37,6 +37,12 @@
     <ClCompile Include="Smbios.cpp">
       <Filter>Component</Filter>
     </ClCompile>
+    <ClCompile Include="HWIDSpoofer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Gpu.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Shared.h">
@@ -58,6 +64,12 @@
       <Filter>Component</Filter>
     </ClInclude>
     <ClInclude Include="HWIDChanger.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="HWIDSpoofer.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Gpu.h">
       <Filter>Component</Filter>
     </ClInclude>
   </ItemGroup>

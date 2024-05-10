@@ -113,6 +113,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Disk.cpp" />
+    <ClCompile Include="Gpu.cpp" />
+    <ClCompile Include="HWIDSpoofer.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Nic.cpp" />
     <ClCompile Include="Smbios.cpp" />
@@ -120,7 +122,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Disk.h" />
+    <ClInclude Include="Gpu.h" />
     <ClInclude Include="HWIDChanger.h" />
+    <ClInclude Include="HWIDSpoofer.h" />
     <ClInclude Include="Logger.hpp" />
     <ClInclude Include="Nic.h" />
     <ClInclude Include="Shared.h" />

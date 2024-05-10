@@ -180,7 +180,7 @@ namespace Smbios
 
 #else // zero   查询smbios的时候会发现找不到实例
 
-		memset(WmipSMBiosTablePhysicalAddress, 0, sizeof(PPHYSICAL_ADDRESS));
+memset(WmipSMBiosTablePhysicalAddress, 0, sizeof(PPHYSICAL_ADDRESS));
 #endif
 		log("ChangeSmbiosSerials Status:Success\n");
 		return STATUS_SUCCESS;
@@ -238,37 +238,194 @@ namespace Smbios
 
 		PVOID WmipSMBiosTableLengthCalled = Utils::reinterpret<PVOID>(WmipSMBiosTablePhysicalAddressCalled, 12);
 		if (WmipSMBiosTableLengthCalled == nullptr) {
-			log("Failed to find the WmipSMBiosTableLengthCalled!");
+			err("Failed to find the WmipSMBiosTableLengthCalled!");
 			return false;
 		}
 		m_WmipSMBiosTableLengthAddr = Utils::translateAddress<PULONG>(WmipSMBiosTableLengthCalled, 6);
 		m_WmipSMBiosTableLength = *m_WmipSMBiosTableLengthAddr;
 
 
-		return false;
+		/*
+		m_ExpBootEnvironmentInformation = Utils::reinterpret<ExpBootEnvironmentInformation>(Utils::FindPatternImage(m_ntoskrnlBase,
+			"\xed\xe4\x00\xdd\x20\x59\xee\x11\xb3\x00\x00\x00\x00\x43",
+			"xx?xxxxxx????x"), 0);
+		if (m_ExpBootEnvironmentInformation == nullptr) {
+			err("Failed to find m_ExpBootEnvironmentInformation!\n");
+			return false;
+		}*/
+
+
+		return true;
 	}
 
 	bool SmbiosManager::Execute()
 	{
 		if (m_ntoskrnlBase == nullptr ||
 			m_WmipSMBiosTableLengthAddr == nullptr ||
-			m_WmipSMBiosTablePhysicalAddress == nullptr || m_WmipSMBiosTableLength == 0)
+			m_WmipSMBiosTablePhysicalAddress == nullptr || m_WmipSMBiosTableLength == 0
+			/* || m_ExpBootEnvironmentInformation == nullptr*/)
 		{
-			log("Please Init SmbiosManager Module first!");
+			err("Please Init SmbiosManager Module first!");
 			ShowAllAddress();
 			return false;
 		}
 
+		if(!ChangeSmbiosSerials()) {
+			err("Failed to execute ChangeSmbiosSerials!");
+			return false;
+		}
+		/* // 暂时未找到这个函数ExpBootEnvironmentInformation
+		if (!ChangeBootInfo()) {
+			err("Failed to execute ChangeBootInfo!");
+			return false;
+		}*/
 
 
-
-		return false;
+		return true;
 	}
 
 	void SmbiosManager::ShowAllAddress()
 	{
-		log("\n m_ntoskrnlBase:%llx\n m_WmipSMBiosTablePhysicalAddress:%llx\n m_WmipSMBiosTableLengthAddr:%llx\n m_WmipSMBiosTableLength:%lx",
+		log("\n m_ntoskrnlBase:%llx\n m_WmipSMBiosTablePhysicalAddress:%llx\n m_WmipSMBiosTableLengthAddr:%llx\n m_WmipSMBiosTableLength:%lx\n",
 			m_ntoskrnlBase, m_WmipSMBiosTablePhysicalAddress, m_WmipSMBiosTableLengthAddr, m_WmipSMBiosTableLength);
 	}
 
+	bool SmbiosManager::ChangeSmbiosSerials()
+	{
+		auto* mapped = MmMapIoSpace(*m_WmipSMBiosTablePhysicalAddress, m_WmipSMBiosTableLength, MmNonCached);
+		if (mapped == nullptr) {
+			err("Failed to map SMBIOS structures!\n");
+			return false;
+		}
+
+		LoopTables(mapped, m_WmipSMBiosTableLength);
+
+		MmUnmapIoSpace(mapped, m_WmipSMBiosTableLength);
+
+		return true;
+	}
+
+	bool SmbiosManager::ChangeBootInfo() const
+	{
+		PBOOT_ENVIRONMENT_INFORMATION bootInfo = m_ExpBootEnvironmentInformation();
+		
+		GUID guid = bootInfo->BootIdentifier;
+		log("GUID: {%08lX-%04hX-%04hX-%02hhX%02hhX-%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX}\n",
+			guid.Data1, guid.Data2, guid.Data3,
+			guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3],
+			guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
+		
+		return true;
+	}
+
+	/**
+	 * \brief Modify information in the table of given header
+	 * \param header Table header (only 0-3 implemented)
+	 * \return
+	 */
+	NTSTATUS SmbiosManager::ProcessTable(SMBIOS_HEADER* header)
+	{
+		using namespace Utils;
+		if (!header->Length)
+			return STATUS_UNSUCCESSFUL;
+
+		if (header->Type == 0)
+		{
+			auto* type0 = reinterpret_cast<SMBIOS_TYPE0*>(header);
+
+			auto* vendor = GetString(header, type0->Vendor);
+			RandomizeString(vendor);
+		}
+
+		if (header->Type == 1)
+		{
+			auto* type1 = reinterpret_cast<SMBIOS_TYPE1*>(header);
+
+			auto* manufacturer = GetString(header, type1->Manufacturer);
+			RandomizeString(manufacturer);
+
+			auto* productName = GetString(header, type1->ProductName);
+			RandomizeString(productName);
+
+			auto* serialNumber = GetString(header, type1->SerialNumber);
+			RandomizeString(serialNumber);
+		}
+
+		if (header->Type == 2)
+		{
+			auto* type2 = reinterpret_cast<SMBIOS_TYPE2*>(header);
+
+			auto* manufacturer = GetString(header, type2->Manufacturer);
+			RandomizeString(manufacturer);
+
+			//auto* productName = GetString(header, type2->ProductName);
+			//RandomizeString(productName);
+
+			auto* serialNumber = GetString(header, type2->SerialNumber);
+			RandomizeString(serialNumber);
+		}
+
+		if (header->Type == 3)
+		{
+			auto* type3 = reinterpret_cast<SMBIOS_TYPE3*>(header);
+
+			auto* manufacturer = GetString(header, type3->Manufacturer);
+			RandomizeString(manufacturer);
+
+			auto* serialNumber = GetString(header, type3->SerialNumber);
+			RandomizeString(serialNumber);
+		}
+
+		return STATUS_SUCCESS;
+	}
+
+	/**
+	 * \brief Loop through SMBIOS tables with provided first table header
+	 * \param mapped Header of the first table
+	 * \param size Size of all tables including strings
+	 * \return
+	 */
+	NTSTATUS SmbiosManager::LoopTables(void* mapped, ULONG size)
+	{
+		auto* endAddress = static_cast<char*>(mapped) + size;
+		while (true)
+		{
+			auto* header = static_cast<SMBIOS_HEADER*>(mapped);
+			if (header->Type == 127 && header->Length == 4)
+				break;
+
+			ProcessTable(header);
+			auto* end = static_cast<char*>(mapped) + header->Length;
+			while (0 != (*end | *(end + 1))) end++;
+			end += 2;
+			if (end >= endAddress)
+				break;
+
+			mapped = end;
+		}
+
+		return STATUS_SUCCESS;
+	}
+
+
+	/**
+	 * \brief Get's the string from SMBIOS table
+	 * \param header Table header
+	 * \param string String itself
+	 * \return Pointer to the null terminated string
+	 */
+	char* SmbiosManager::GetString(SMBIOS_HEADER* header, SMBIOS_STRING string)
+	{
+		const auto* start = reinterpret_cast<const char*>(header) + header->Length;
+
+		if (!string || *start == 0)
+			return nullptr;
+
+		while (--string)
+		{
+			start += strlen(start) + 1;
+		}
+
+		return const_cast<char*>(start);
+	}
 }
