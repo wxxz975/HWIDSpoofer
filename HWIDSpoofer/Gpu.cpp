@@ -51,7 +51,7 @@ namespace Gpu
 
 		m_original_device_ctl = driver_object->MajorFunction[IRP_MJ_DEVICE_CONTROL];
 		driver_object->MajorFunction[IRP_MJ_DEVICE_CONTROL] = DeviceIOControl;
-		log("Hook Gpu OriginalDeviceIoControl:%llx to DeviceIoControl:%llx\n", m_original_device_ctl, DeviceIOControl);
+		//log("Hook Gpu OriginalDeviceIoControl:%llx to DeviceIoControl:%llx\n", m_original_device_ctl, DeviceIOControl);
 
 		
 		ObDereferenceObject(driver_object);
@@ -76,7 +76,7 @@ namespace Gpu
 		}
 
 		ObDereferenceObject(driver_object);
-		
+		//ndisMiniportList
 		return true;
 	}
 

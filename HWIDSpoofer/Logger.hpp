@@ -7,7 +7,7 @@
 inline void log_(const char* file, int line, const char* fmt, ...)
 {
     char buffer[256] = { 0 };
-   
+
     NTSTATUS status = RtlStringCbPrintfA(buffer, sizeof(buffer), "[+][Log %s:%d] ", file, line);
     if (NT_SUCCESS(status))
     {
@@ -15,8 +15,8 @@ inline void log_(const char* file, int line, const char* fmt, ...)
         va_start(args, fmt);
         vDbgPrintExWithPrefix(buffer, 0, 0, fmt, args);
         va_end(args);
-    } 
-}
+    }
+};
 
 inline void error_(const char* file, int line, const char* fmt, ...)
 {
@@ -30,7 +30,7 @@ inline void error_(const char* file, int line, const char* fmt, ...)
         vDbgPrintExWithPrefix(buffer, 0, 0, fmt, args);
         va_end(args);
     }
-}
+};
 
 #ifdef NO_OUTPUT // 控制是否打印输出
 #define log(fmt, ...) 

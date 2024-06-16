@@ -147,49 +147,36 @@ namespace Utils
 		}
 	}
 
-	VOID RandomizeString(char* string)
+	VOID RandomizeString(char* string, int size)
 	{
-		const auto len = static_cast<int>(strlen(string));
+		int len = 0;
+		if (size == 0) len = strlen(string);
+		else len = size;
+		
 		Utils::RandomText(string, len - 1);
 		string[len] = '\0';
 	}
 
 
-	extern "C" POBJECT_TYPE * IoDriverObjectType;
+	
 
-	static BOOL SwapControl(wchar_t* driverNameStr, PVOID hookFunc, PVOID* originalFunc)
+	bool IsValidKernelPtr(PVOID Ptr)
 	{
-		UNICODE_STRING DriverName;
-		RtlInitUnicodeString(&DriverName, driverNameStr);
-
-		PDRIVER_OBJECT driver_object = 0;
-		NTSTATUS status = ObReferenceObjectByName(&DriverName, OBJ_CASE_INSENSITIVE, 0, 0, *IoDriverObjectType, KernelMode, 0, (PVOID*)&driver_object);
-		if (!NT_SUCCESS(status)) {
-			err("Failed to find the driver object!");
-			return FALSE;
-		}
-		
-		PDRIVER_DISPATCH originalDispatch = (PDRIVER_DISPATCH)InterlockedExchangePointer(
-			(PVOID*)&driver_object->MajorFunction[IRP_MJ_DEVICE_CONTROL],
-			(PVOID)hookFunc
-		);
-
-		if (originalDispatch == nullptr) {
-			// if something err, restore the function
-			InterlockedExchangePointer(
-				(PVOID*)&driver_object->MajorFunction[IRP_MJ_DEVICE_CONTROL],
-				(PVOID)originalDispatch
-			);
-			err("Failed to ExchangePointer!");
-
-			return FALSE;
+		if (Ptr == nullptr)
+		{
+			return false;
 		}
 
-		*originalFunc = originalDispatch;
+		if (MmIsAddressValid(Ptr))
+		{
+			ULONG_PTR Address = (ULONG_PTR)Ptr;
+			if (Address >= (ULONG_PTR)MmSystemRangeStart)
+			{
+				return true;
+			}
+		}
 
-		ObDereferenceObject(driver_object);
-
-		return TRUE;
+		return false;
 	}
 
 

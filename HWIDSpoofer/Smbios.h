@@ -24,22 +24,35 @@ namespace Smbios
 
 
 
+	enum SMBIOS_INFO_TYPE: UINT8
+	{
+		BIOS_INFO = 0,	// bios information
+		SYSTEM_INFO = 1,	// system information
+		BASEBOARD_INFO = 2,
+		SYSTEM_ENCLOSURE = 3,	
+		PROCESSOR_INFO = 4,	// processor information
+		CACHE_INFO = 7,		// cache information
+		SYSTEM_SLOTS = 9,
+		PHYSICAL_MEMORY_ARRAY = 16,
+		MEMORY_DEVICE = 17, // memory device
+		MEMORY_ARRAY_MAPPED_ADDR = 19,
+		SYSTEM_BOOT_INFO = 32   // boot information
+	};
+
 	// ------------------------------------------------
 	// SMBIOS / gnu-efi
 	// ------------------------------------------------
-	typedef struct
+	typedef struct BIOS_HEADER
 	{
-		UINT8   Type;
-		UINT8   Length;
-		UINT8   Handle[2];
+		SMBIOS_INFO_TYPE	Type;
+		UINT8				Length;
+		UINT8				Handle[2];
 	} SMBIOS_HEADER;
-
-
 
 	typedef UINT8   SMBIOS_STRING;
 
 	// reference: https://www.dmtf.org/sites/default/files/standards/documents/DSP0134_3.6.0WIP50.pdf
-	typedef struct
+	typedef struct _SMBIOS_TYPE0
 	{
 		SMBIOS_HEADER   Hdr;
 		SMBIOS_STRING   Vendor;
@@ -49,35 +62,37 @@ namespace Smbios
 		UINT8           BiosRomSize;
 		UINT8           BiosCharacteristics[8];
 		// ....
-	} SMBIOS_TYPE0; // BIOS Information
+	} BIOSInfo,*PBIOSInfo; // BIOS Information
 
-	typedef struct
-	{
-		SMBIOS_HEADER   Hdr;
-		SMBIOS_STRING   Manufacturer;
-		SMBIOS_STRING   ProductName;
-		SMBIOS_STRING   Version;
-		SMBIOS_STRING   SerialNumber;
-		GUID			UUID[16];
-		//
-		// always byte copy this data to prevent alignment faults!
-		//
-		UINT8           WakeUpType;
-		// .... 
-	} SMBIOS_TYPE1; // System Information
 
-	typedef struct
-	{
-		SMBIOS_HEADER   Hdr;
-		SMBIOS_STRING   Manufacturer;
-		SMBIOS_STRING   Product;
-		SMBIOS_STRING   Version;
-		SMBIOS_STRING   SerialNumber;
-		SMBIOS_STRING	AssetTag;
-		// ... 
-	} SMBIOS_TYPE2; // Baseboard (or Module) Information
+	typedef struct _SMBIOS_TYPE1 {
+		SMBIOS_HEADER	Header;
+		SMBIOS_STRING	Manufacturer;
+		SMBIOS_STRING	ProductName;
+		SMBIOS_STRING	Version;
+		SMBIOS_STRING	SerialNumber;
+		UINT8			UUID[16];
+		UINT8			WakeUpType;
+		UINT8			SKUNumber;
+		UINT8			Family;
+	} SystemInfo, * PSystemInfo;
 
-	typedef struct
+	typedef struct _SMBIOS_TYPE2 {
+		SMBIOS_HEADER	Header;
+		SMBIOS_STRING	Manufacturer;
+		SMBIOS_STRING	ProductName;
+		SMBIOS_STRING	Version;
+		SMBIOS_STRING	SerialNumber;
+		UINT8			AssetTag;
+		UINT8			FeatureFlags;
+		UINT8			LocationInChassis;
+		UINT16			ChassisHandle;
+		UINT8			Type;
+		UINT8			NumObjHandle;
+		UINT16*			pObjHandle;
+	} BoardInfo, * PBoardInfo;
+
+	typedef struct _SMBIOS_TYPE3
 	{
 		SMBIOS_HEADER   Hdr;
 		SMBIOS_STRING   Manufacturer;
@@ -90,16 +105,16 @@ namespace Smbios
 		UINT8           ThermalState;
 		UINT8           SecurityStatus;
 		UINT8           OemDefined[4];
-	} SMBIOS_TYPE3;	// System Enclosure or Chassis
+	} SystemEnc,*PSystemEnc;	// System Enclosure or Chassis
 
-	typedef struct
+	typedef struct _SMBIOS_TYPE4
 	{
 		SMBIOS_HEADER   Hdr;
-		UINT8           SocketDesignation;
+		SMBIOS_STRING   SocketDesignation;
 		UINT8           ProcessorType;
 		UINT8           ProcessorFamily;
 		SMBIOS_STRING   ProcessorManufacturer; // ->
-		UINT8           ProcessorId[8];			// ->
+		UINT8           ProcessorId[8];			// -> change this 
 		SMBIOS_STRING   ProcessorVersion;
 		UINT8           Voltage;
 		UINT8           ExternalClock[2];
@@ -110,63 +125,36 @@ namespace Smbios
 		UINT8           L1CacheHandle[2];
 		UINT8           L2CacheHandle[2];
 		UINT8           L3CacheHandle[2];
-		SMBIOS_STRING	SerialNumber;		// ->
+		SMBIOS_STRING	SerialNumber;		// -> change this
 		SMBIOS_STRING	AssetTag;
 		SMBIOS_STRING	PartNumber;
 		// ....
-	} SMBIOS_TYPE4; // Processor Information
+	} ProcessorInfo, *PProcessorInfo; // Processor Information
 
-	/// Memory Controller Information (Type 5)
-
-	enum {
-		SMBIOSTYPE0 = 0x0,
-		SMBIOSTYPE1 = 0x1,
-		SMBIOSTYPE2 = 0x2,
-		SMBIOSTYPE3 = 0x3,
-		SMBIOSTYPE4 = 0x4
-	};
-
-	typedef union
+	/*
+	typedef struct _SMBIOS_TYPE17
 	{
-		SMBIOS_HEADER* Hdr;
-		SMBIOS_TYPE0* Type0;
-		SMBIOS_TYPE1* Type1;
-		SMBIOS_TYPE2* Type2;
-		SMBIOS_TYPE3* Type3;
-		SMBIOS_TYPE4* Type4;
-		UINT8* Raw;
-	} SMBIOS_STRUCTURE_POINTER;
+		SMBIOS_HEADER   Hdr;
+		WORD	padding0[5];
+		BYTE	padding1[5];
+		WORD	padding2[2];
+		STRING  Manufacturer; // 这里发现内存无法对齐， 文档上显示这个他的偏移是0x17， 但是使用内存查看这个的偏食是0x18
+		STRING	SerialNumber; 
+	}MemDevice, *PMemDevice;
+	*/
 
-	typedef struct
-	{
-		UINT8   AnchorString[4];
-		UINT8   EntryPointStructureChecksum;
-		UINT8   EntryPointLength;
-		UINT8   MajorVersion;
-		UINT8   MinorVersion;
-		UINT16  MaxStructureSize;
-		UINT8   EntryPointRevision;
-		UINT8   FormattedArea[5];
-		UINT8   IntermediateAnchorString[5];
-		UINT8   IntermediateChecksum;
-		UINT16  TableLength;
-		UINT32  TableAddress;
-		UINT16  NumberOfSmbiosStructures;
-		UINT8   SmbiosBcdRevision;
-	} SMBIOS_STRUCTURE_TABLE;
-
-	typedef struct _RAW_SMBIOS
-	{
-		UINT8	Used20CallingMethod;
-		UINT8	MajorVersion;
-		UINT8	MinorVersion;
-		UINT8	DmiRevision;
-		UINT32	Size;
-		UINT8* SMBIOSTableData;
-	} RAW_SMBIOS;
-
-
-
+	/*
+	typedef struct _SMBIOS_TYPE45 {
+		SMBIOS_HEADER   Hdr;
+		STRING FirmwareComponentName;
+		STRING FirmwareVersion;
+		BYTE VersionFormat;
+		BYTE FirmwareID;
+		BYTE FirmwareIDFormat;
+		BYTE ReleaseDate;
+		BYTE Manufacturer;
+	} FirmwareInventoryInfo, * PFirmwareInventoryInfo;
+	*/
 
 	class SmbiosManager : public HWIDChanger
 	{

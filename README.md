@@ -66,7 +66,7 @@ For example, if you want to find the signature code of a function called Functio
     fffff805`674194af 4883ec20        sub     rsp,20h
     fffff805`674194b3 488bf9          mov     rdi,rcx
     fffff805`674194b6 33db            xor     ebx,ebx   // 24
-
+    
     fffff805`674194b8 488d0d09b60700  lea     rcx,[ndis!ndisGlobalFilterListLock (fffff805`67494ac8)]
     fffff805`674194bf 4c8b1522a40800  mov     r10,qword ptr [ndis!_imp_KeAcquireSpinLockRaiseToDpc (fffff805`674a38e8)]
     fffff805`674194c6 e8054440fa      call    nt!KeAcquireSpinLockRaiseToDpc (fffff805`6181d8d0)
@@ -96,8 +96,9 @@ As for my current methods of finding signature codes, there are two ways and two
 1. If what you're looking for is a function, then you can directly find it using the `x + functionName`.
 2. If what you're looking for is a global structure or variable instance address, then you need to find a place where this structure variable is called, and then calculate its actual address.
 
----
-### 6. WinDbg Commands
+
+
+## 6. WinDbg Command
 
 1. Search Symbol:
     ```
@@ -132,4 +133,4 @@ The author assumes no liability for any direct or indirect damages arising from 
 - [mutante](https://github.com/SamuelTulach/mutante.git)
 - [hwid](https://github.com/btbd/hwid)
 - [EASY-HWID-SPOOFER](https://github.com/FiYHer/EASY-HWID-SPOOFER)
-- [Smbios manual](https://www.dmtf.org/standards/smbios)
+- [Smbios](https://www.dmtf.org/standards/smbios)

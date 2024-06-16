@@ -274,6 +274,7 @@ memset(WmipSMBiosTablePhysicalAddress, 0, sizeof(PPHYSICAL_ADDRESS));
 			err("Failed to execute ChangeSmbiosSerials!");
 			return false;
 		}
+
 		/* // 暂时未找到这个函数ExpBootEnvironmentInformation
 		if (!ChangeBootInfo()) {
 			err("Failed to execute ChangeBootInfo!");
@@ -329,51 +330,69 @@ memset(WmipSMBiosTablePhysicalAddress, 0, sizeof(PPHYSICAL_ADDRESS));
 		if (!header->Length)
 			return STATUS_UNSUCCESSFUL;
 
-		if (header->Type == 0)
-		{
-			auto* type0 = reinterpret_cast<SMBIOS_TYPE0*>(header);
-
-			auto* vendor = GetString(header, type0->Vendor);
+		if (header->Type == BIOS_INFO) {
+			auto* ptr = reinterpret_cast<PBIOSInfo>(header);
+			//ptr->BiosVersion
+			auto* vendor = GetString(header, ptr->Vendor);
 			RandomizeString(vendor);
 		}
 
-		if (header->Type == 1)
+		if (header->Type == SYSTEM_INFO)
 		{
-			auto* type1 = reinterpret_cast<SMBIOS_TYPE1*>(header);
+			auto* ptr = reinterpret_cast<PSystemInfo>(header);
 
-			auto* manufacturer = GetString(header, type1->Manufacturer);
+			auto* manufacturer = GetString(header, ptr->Manufacturer);
+			log("System manufacturer:%s\n", manufacturer);
 			RandomizeString(manufacturer);
+			
 
-			auto* productName = GetString(header, type1->ProductName);
+			auto* productName = GetString(header, ptr->ProductName);
+			log("System productName:%s\n", productName);
 			RandomizeString(productName);
 
-			auto* serialNumber = GetString(header, type1->SerialNumber);
+			auto* serialNumber = GetString(header, ptr->SerialNumber);
+			log("System serialNumber:%s\n", serialNumber);
 			RandomizeString(serialNumber);
+
+			auto* uuid = reinterpret_cast<char*>(ptr->UUID);
+			log("System UUID:%s\n", uuid);
+			RtlZeroMemory(uuid, 16);
 		}
 
-		if (header->Type == 2)
+		if (header->Type == BASEBOARD_INFO)
 		{
-			auto* type2 = reinterpret_cast<SMBIOS_TYPE2*>(header);
+			auto* ptr = reinterpret_cast<PBoardInfo>(header);
 
-			auto* manufacturer = GetString(header, type2->Manufacturer);
+			auto* manufacturer = GetString(header, ptr->Manufacturer);
+			log("BaseBoard manufacturer:%s\n", manufacturer);
 			RandomizeString(manufacturer);
+			
 
-			//auto* productName = GetString(header, type2->ProductName);
-			//RandomizeString(productName);
+			auto* productName = GetString(header, ptr->ProductName);
+			log("BaseBoard productName:%s\n", productName);
+			RandomizeString(productName);
+			
 
-			auto* serialNumber = GetString(header, type2->SerialNumber);
+			auto* serialNumber = GetString(header, ptr->SerialNumber);
+			log("BaseBoard serialNumber:%s\n", serialNumber);
 			RandomizeString(serialNumber);
+			
 		}
+		
+		
+		if (header->Type == PROCESSOR_INFO) {
+			auto* ptr = reinterpret_cast<PProcessorInfo>(header);
+			//TODO: 修改ProcessorId， 和 SerialNumber
 
-		if (header->Type == 3)
-		{
-			auto* type3 = reinterpret_cast<SMBIOS_TYPE3*>(header);
 
-			auto* manufacturer = GetString(header, type3->Manufacturer);
-			RandomizeString(manufacturer);
-
-			auto* serialNumber = GetString(header, type3->SerialNumber);
-			RandomizeString(serialNumber);
+			/*
+			* 
+			auto* serialNumber = GetString(header, ptr->SerialNumber);
+			RandomizeString(serialNumber); // 这个长度不定
+			*/
+			
+			//auto* processorId = reinterpret_cast<char*>(ptr->ProcessorId);
+			//RandomizeString(processorId, 8); // 这个不属于字符串类型不能使用这个
 		}
 
 		return STATUS_SUCCESS;
@@ -391,13 +410,14 @@ memset(WmipSMBiosTablePhysicalAddress, 0, sizeof(PPHYSICAL_ADDRESS));
 		while (true)
 		{
 			auto* header = static_cast<SMBIOS_HEADER*>(mapped);
-			if (header->Type == 127 && header->Length == 4)
+			if (header->Type > 127 && header->Length == 4)  // 文档中规定smbios 只保留了0-127的类型，并且这个header 本身占用4字节
 				break;
 
 			ProcessTable(header);
 			auto* end = static_cast<char*>(mapped) + header->Length;
-			while (0 != (*end | *(end + 1))) end++;
+			while (0 != (*end | *(end + 1))) end++; // 连续两个字节是\0即为一个结构的结束符
 			end += 2;
+
 			if (end >= endAddress)
 				break;
 

@@ -2,7 +2,6 @@
 #include <ntifs.h>
 #include <windef.h>
 
-
 namespace Utils
 {
 	PVOID GetModuleBase(const char* moduleName);
@@ -12,11 +11,14 @@ namespace Utils
 	
 
 	VOID RandomText(char* text, const int length);
-	VOID RandomizeString(char* string);
+	VOID RandomizeString(char* string, int size = 0);
 
 	VOID SpoofBuffer(DWORD seed, PBYTE buffer, DWORD length);
 
-	BOOL SwapControl(wchar_t* driverName, PVOID hookFunc, PVOID* originalFunc);
+	//BOOL SwapControl(wchar_t* driverName, PVOID hookFunc, PVOID* originalFunc);
+	bool IsValidKernelPtr(PVOID Ptr);
+
+	extern "C" POBJECT_TYPE * IoDriverObjectType;
 
 
 #define AdjustOffset(OriAddr, Offset) (PBYTE)OriAddr + Offset

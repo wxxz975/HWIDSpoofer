@@ -1,60 +1,55 @@
 #include "HWIDSpoofer.h"
 
 
+#include "Disk.h"
+#include "Nic.h"
+#include "Smbios.h"
+#include "Gpu.h"
+
 #include "Logger.hpp"
 
 bool HWIDSpoofer::Initialize()
-{
-	
+{	
 	if (!m_diskMgr.Initialize()) {
-		err("Failed to init diskMgr!");
+		err("Error Init DiskManager\n");
 		return false;
 	}
 	m_diskMgr.ShowAllAddress();
 
 
 	if (!m_nicMgr.Initialize()) {
-		err("Failed to init nicMgr!");
+		err("Error Init NICManager\n");
 		return false;
 	}
 	m_nicMgr.ShowAllAddress();
 
-
 	if (!m_smbiosMgr.Initialize()) {
-		err("Failed to init smbiosMgr!");
+		err("Error Init SmbiosManager\n");
 		return false;
 	}
 	m_smbiosMgr.ShowAllAddress();
-	/*
-	if (!m_gpuMgr.Initialize()) {
-		err("Failed to init gpuMgr!");
-		return false;
-	}*/
 
 	return true;
 }
 
 bool HWIDSpoofer::Execute()
 {
-	
-	if (!m_nicMgr.Execute()){
-		err("Failed to Execute m_nicMgr\n");
-		return false;
-	}
+
 	if (!m_diskMgr.Execute()) {
-		err("Failed to Execute m_diskMgr\n");
+		err("Error on Execute DiskManager\n");
 		return false;
 	}
 
+	if (!m_nicMgr.Execute()) {
+		err("Error on Execute NICManager\n");
+		return false;
+	}
+
+	
 	if (!m_smbiosMgr.Execute()) {
-		err("Failed to Execute m_smbiosMgr\n");
+		err("Error on Execute SmbiosManager\n");
 		return false;
 	}
-	/*
-	if(!m_gpuMgr.Execute()) {
-		err("Failed to Execute m_gpuMgr!\n");
-		return false;
-	}
-	*/
+
 	return true;
 }
