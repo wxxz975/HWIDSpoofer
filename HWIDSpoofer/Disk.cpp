@@ -10,7 +10,7 @@
 namespace Disk
 {
 	extern "C" POBJECT_TYPE * IoDriverObjectType;
-	/*this need hook*/
+	/*this method need hook*/
 	VOID FuckDiskDiskpatch()
 	{
 		PVOID base = Utils::GetModuleBase("classpnp.sys");
