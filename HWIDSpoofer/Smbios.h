@@ -2,6 +2,11 @@
 #include <ntifs.h>
 #include "HWIDChanger.h"
 
+//
+// Lastest Reference: https://www.dmtf.org/standards/smbios
+// //
+
+
 namespace Smbios
 {
 	NTSTATUS ChangeSmbiosSerials();
@@ -20,9 +25,6 @@ namespace Smbios
 		// ....
 	} BOOT_ENVIRONMENT_INFORMATION, * PBOOT_ENVIRONMENT_INFORMATION;
 
-	typedef PBOOT_ENVIRONMENT_INFORMATION(__fastcall* ExpBootEnvironmentInformation)(VOID);
-
-
 
 	enum SMBIOS_INFO_TYPE: UINT8
 	{
@@ -37,6 +39,7 @@ namespace Smbios
 		MEMORY_DEVICE = 17, // memory device
 		MEMORY_ARRAY_MAPPED_ADDR = 19,
 		SYSTEM_BOOT_INFO = 32   // boot information
+
 	};
 
 	// ------------------------------------------------
@@ -182,7 +185,7 @@ namespace Smbios
 		PULONG m_WmipSMBiosTableLengthAddr = nullptr;
 		ULONG m_WmipSMBiosTableLength = 0;
 
-		ExpBootEnvironmentInformation m_ExpBootEnvironmentInformation = nullptr;
+		PBOOT_ENVIRONMENT_INFORMATION m_ExpBootEnvironmentInformation = nullptr;
 	};
 }
 

@@ -245,25 +245,39 @@ memset(WmipSMBiosTablePhysicalAddress, 0, sizeof(PPHYSICAL_ADDRESS));
 		m_WmipSMBiosTableLength = *m_WmipSMBiosTableLengthAddr;
 
 
+
 		/*
-		m_ExpBootEnvironmentInformation = Utils::reinterpret<ExpBootEnvironmentInformation>(Utils::FindPatternImage(m_ntoskrnlBase,
-			"\xed\xe4\x00\xdd\x20\x59\xee\x11\xb3\x00\x00\x00\x00\x43",
-			"xx?xxxxxx????x"), 0);
+		*	这个ExpBootEnvironmentInformation 结构被nt!ExpQuerySystemInformation+0xc88 内部调用过
+		* 
+		* fffff804`6b7fa4c8 e9410e0000      jmp     nt!ExpQuerySystemInformation+0x2fae (fffff804`6b7fb30e)
+			fffff804`6b7fa4cd e93c0e0000      jmp     nt!ExpQuerySystemInformation+0x2fae (fffff804`6b7fb30e)
+			fffff804`6b7fa4d2 0f100547f16100  movups  xmm0,xmmword ptr [nt!ExpBootEnvironmentInformation (fffff804`6be19620)]
+			fffff804`6b7fa4d9 0f1103          movups  xmmword ptr [rbx],xmm0
+			fffff804`6b7fa4dc 8b054ef16100    mov     eax,dword ptr [nt!ExpBootEnvironmentInformation+0x10 (fffff804`6be19630)]
+			fffff804`6b7fa4e2 894310          mov     dword ptr [rbx+10h],eax
+			fffff804`6b7fa4e5 3b7c2430        cmp     edi,dword ptr [rsp+30h]
+			fffff804`6b7fa4e9 0f82cbf5ffff    jb      nt!ExpQuerySystemInformation+0x175a (fffff804`6b7f9aba)
+		*/
+
+		PVOID CallExpBootEnvironmentInformation = Utils::FindPatternImage(m_ntoskrnlBase,
+			"\x0f\x10\x05\x00\x00\x00\x00\x0f\x11\x03\x8b\x05",
+			"xxx????xxxxx");
+		m_ExpBootEnvironmentInformation = Utils::translateAddress<PBOOT_ENVIRONMENT_INFORMATION>(CallExpBootEnvironmentInformation, 7);
 		if (m_ExpBootEnvironmentInformation == nullptr) {
 			err("Failed to find m_ExpBootEnvironmentInformation!\n");
 			return false;
-		}*/
-
+		}
 
 		return true;
 	}
 
 	bool SmbiosManager::Execute()
 	{
+		
 		if (m_ntoskrnlBase == nullptr ||
 			m_WmipSMBiosTableLengthAddr == nullptr ||
 			m_WmipSMBiosTablePhysicalAddress == nullptr || m_WmipSMBiosTableLength == 0
-			/* || m_ExpBootEnvironmentInformation == nullptr*/)
+			|| m_ExpBootEnvironmentInformation == nullptr)
 		{
 			err("Please Init SmbiosManager Module first!");
 			ShowAllAddress();
@@ -275,11 +289,11 @@ memset(WmipSMBiosTablePhysicalAddress, 0, sizeof(PPHYSICAL_ADDRESS));
 			return false;
 		}
 
-		/* // 暂时未找到这个函数ExpBootEnvironmentInformation
+		 // 暂时未找到这个函数ExpBootEnvironmentInformation
 		if (!ChangeBootInfo()) {
 			err("Failed to execute ChangeBootInfo!");
 			return false;
-		}*/
+		}
 
 
 		return true;
@@ -308,7 +322,7 @@ memset(WmipSMBiosTablePhysicalAddress, 0, sizeof(PPHYSICAL_ADDRESS));
 
 	bool SmbiosManager::ChangeBootInfo() const
 	{
-		PBOOT_ENVIRONMENT_INFORMATION bootInfo = m_ExpBootEnvironmentInformation();
+		PBOOT_ENVIRONMENT_INFORMATION bootInfo = m_ExpBootEnvironmentInformation;
 		
 		GUID guid = bootInfo->BootIdentifier;
 		log("GUID: {%08lX-%04hX-%04hX-%02hhX%02hhX-%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX}\n",
@@ -316,6 +330,8 @@ memset(WmipSMBiosTablePhysicalAddress, 0, sizeof(PPHYSICAL_ADDRESS));
 			guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3],
 			guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
 		
+		RtlZeroMemory(bootInfo, sizeof(GUID));
+
 		return true;
 	}
 
@@ -372,7 +388,7 @@ memset(WmipSMBiosTablePhysicalAddress, 0, sizeof(PPHYSICAL_ADDRESS));
 			log("BaseBoard productName:%s\n", productName);
 			RandomizeString(productName);
 			
-
+			// 这里对应wmic bios get SerialNumber 获取的值
 			auto* serialNumber = GetString(header, ptr->SerialNumber);
 			log("BaseBoard serialNumber:%s\n", serialNumber);
 			RandomizeString(serialNumber);
@@ -386,12 +402,12 @@ memset(WmipSMBiosTablePhysicalAddress, 0, sizeof(PPHYSICAL_ADDRESS));
 
 
 			/*
-			* 
 			auto* serialNumber = GetString(header, ptr->SerialNumber);
 			RandomizeString(serialNumber); // 这个长度不定
 			*/
 			
-			//auto* processorId = reinterpret_cast<char*>(ptr->ProcessorId);
+			auto* processorId = reinterpret_cast<char*>(ptr->ProcessorId);
+			RtlZeroMemory(processorId, 8);
 			//RandomizeString(processorId, 8); // 这个不属于字符串类型不能使用这个
 		}
 

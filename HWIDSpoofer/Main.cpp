@@ -3,6 +3,7 @@
 #include "Logger.hpp"
 #include "HWIDSpoofer.h"
 
+
 extern "C" NTSTATUS DriverEntry(PDRIVER_OBJECT pDrvObj, PUNICODE_STRING pRegistryPath)
 {
 	UNREFERENCED_PARAMETER(pDrvObj);

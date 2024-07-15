@@ -8,8 +8,11 @@
 
 #include "Logger.hpp"
 
+#include "Utils.h"
+
 bool HWIDSpoofer::Initialize()
 {	
+	
 	if (!m_diskMgr.Initialize()) {
 		err("Error Init DiskManager\n");
 		return false;
@@ -22,19 +25,20 @@ bool HWIDSpoofer::Initialize()
 		return false;
 	}
 	m_nicMgr.ShowAllAddress();
-
+	
+	
 	if (!m_smbiosMgr.Initialize()) {
 		err("Error Init SmbiosManager\n");
 		return false;
 	}
 	m_smbiosMgr.ShowAllAddress();
-
+	
 	return true;
 }
 
 bool HWIDSpoofer::Execute()
 {
-
+	
 	if (!m_diskMgr.Execute()) {
 		err("Error on Execute DiskManager\n");
 		return false;
@@ -46,10 +50,11 @@ bool HWIDSpoofer::Execute()
 	}
 
 	
-	if (!m_smbiosMgr.Execute()) {
+	if (!m_smbiosMgr.Execute ()) {
 		err("Error on Execute SmbiosManager\n");
 		return false;
 	}
-
+	
+	
 	return true;
 }
