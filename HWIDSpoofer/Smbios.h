@@ -39,7 +39,6 @@ namespace Smbios
 		MEMORY_DEVICE = 17, // memory device
 		MEMORY_ARRAY_MAPPED_ADDR = 19,
 		SYSTEM_BOOT_INFO = 32   // boot information
-
 	};
 
 	// ------------------------------------------------
@@ -76,7 +75,7 @@ namespace Smbios
 		SMBIOS_STRING	SerialNumber;
 		UINT8			UUID[16];
 		UINT8			WakeUpType;
-		UINT8			SKUNumber;
+		SMBIOS_STRING	SKUNumber;
 		UINT8			Family;
 	} SystemInfo, * PSystemInfo;
 
@@ -86,14 +85,14 @@ namespace Smbios
 		SMBIOS_STRING	ProductName;
 		SMBIOS_STRING	Version;
 		SMBIOS_STRING	SerialNumber;
-		UINT8			AssetTag;
+		SMBIOS_STRING	AssetTag;
 		UINT8			FeatureFlags;
-		UINT8			LocationInChassis;
+		SMBIOS_STRING	LocationInChassis;
 		UINT16			ChassisHandle;
-		UINT8			Type;
+		UINT8			BoardType;
 		UINT8			NumObjHandle;
 		UINT16*			pObjHandle;
-	} BoardInfo, * PBoardInfo;
+	} BoardInfo, *PBoardInfo;
 
 	typedef struct _SMBIOS_TYPE3
 	{
@@ -108,7 +107,7 @@ namespace Smbios
 		UINT8           ThermalState;
 		UINT8           SecurityStatus;
 		UINT8           OemDefined[4];
-	} SystemEnc,*PSystemEnc;	// System Enclosure or Chassis
+	} SystemEnc, *PSystemEnc;	// System Enclosure or Chassis
 
 	typedef struct _SMBIOS_TYPE4
 	{
@@ -134,29 +133,38 @@ namespace Smbios
 		// ....
 	} ProcessorInfo, *PProcessorInfo; // Processor Information
 
-	/*
+	
 	typedef struct _SMBIOS_TYPE17
 	{
 		SMBIOS_HEADER   Hdr;
-		WORD	padding0[5];
-		BYTE	padding1[5];
-		WORD	padding2[2];
-		STRING  Manufacturer; // 这里发现内存无法对齐， 文档上显示这个他的偏移是0x17， 但是使用内存查看这个的偏食是0x18
-		STRING	SerialNumber; 
-	}MemDevice, *PMemDevice;
-	*/
+		UINT8			PhysicalMemoryArrayHandle[2];
+		UINT8			MemoryErrorInformationHandle[2];
+		UINT8			TotalWidth[2];
+		UINT8			DataWidth[2];
+		UINT8			Size[2];
+		UINT8			FormFactor;
+		UINT8			DeviceSet;
+		SMBIOS_STRING	DeviceLocator;
+		SMBIOS_STRING	BankLocator;
+		UINT8			MemoryType;
+		UINT8			TypeDetail[2];
+		UINT8			Speed[2];
+		SMBIOS_STRING	Manufacturer;
+		SMBIOS_STRING	SerialNumber;
+	}MemoryDevice, *PMemoryDevice;
+	
 
 	/*
-	typedef struct _SMBIOS_TYPE45 {
-		SMBIOS_HEADER   Hdr;
-		STRING FirmwareComponentName;
-		STRING FirmwareVersion;
-		BYTE VersionFormat;
-		BYTE FirmwareID;
-		BYTE FirmwareIDFormat;
-		BYTE ReleaseDate;
-		BYTE Manufacturer;
-	} FirmwareInventoryInfo, * PFirmwareInventoryInfo;
+		typedef struct _SMBIOS_TYPE45 {
+			SMBIOS_HEADER   Hdr;
+			STRING FirmwareComponentName;
+			STRING FirmwareVersion;
+			BYTE VersionFormat;
+			BYTE FirmwareID;
+			BYTE FirmwareIDFormat;
+			BYTE ReleaseDate;
+			BYTE Manufacturer;
+		} FirmwareInventoryInfo, * PFirmwareInventoryInfo;
 	*/
 
 	class SmbiosManager : public HWIDChanger
@@ -173,7 +181,6 @@ namespace Smbios
 	private:
 		bool ChangeSmbiosSerials();
 		bool ChangeBootInfo() const;
-
 
 	private:
 		NTSTATUS ProcessTable(SMBIOS_HEADER* header);

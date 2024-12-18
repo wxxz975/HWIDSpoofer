@@ -3,7 +3,6 @@
 #include <ntstrsafe.h>
 
 
-// 在内核层面不能使用用户层API 或者标准库的函数
 inline void log_(const char* file, int line, const char* fmt, ...)
 {
     char buffer[256] = { 0 };
@@ -32,7 +31,7 @@ inline void error_(const char* file, int line, const char* fmt, ...)
     }
 };
 
-#ifdef NO_OUTPUT // 控制是否打印输出
+#ifdef NO_OUTPUT // 锟斤拷锟斤拷锟角凤拷锟接★拷锟斤拷
 #define log(fmt, ...) 
 #define err(fmt, ...)
 #else

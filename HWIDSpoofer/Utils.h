@@ -21,20 +21,16 @@ namespace Utils
 	extern "C" POBJECT_TYPE * IoDriverObjectType;
 
 
-#define AdjustOffset(OriAddr, Offset) (PBYTE)OriAddr + Offset
+#define AdjustOffset(OriAddr, Offset) ((PBYTE)OriAddr + Offset)
 
-	// 将这个OriAddr指针增加一个Offset的偏移，并且重新解释为T类型
+	
 	template<class T>
 	T reinterpret(PVOID OriAddr, DWORD Offset)
 	{
 		return reinterpret_cast<T>(AdjustOffset(OriAddr, Offset));
 	}
 
-	// 将调用函数的地址，转化为函数地址
-	///
-	/// base : 调用函数的起始地址(call)
-	/// totalLen: 此指令总长度 = 指令 + 地址
-	///
+	
 	template<class T>
 	T translateAddress(PVOID base, int totalLen)
 	{

@@ -44,6 +44,7 @@
     <DriverType>KMDF</DriverType>
     <DriverTargetPlatform>Universal</DriverTargetPlatform>
     <Driver_SpectreMitigation>false</Driver_SpectreMitigation>
+    <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'" Label="Configuration">
     <TargetVersion>Windows10</TargetVersion>
@@ -127,6 +128,7 @@
     <ClInclude Include="HWIDSpoofer.h" />
     <ClInclude Include="Logger.hpp" />
     <ClInclude Include="Nic.h" />
+    <ClInclude Include="NVInfo.h" />
     <ClInclude Include="Shared.h" />
     <ClInclude Include="Smbios.h" />
     <ClInclude Include="Utils.h" />

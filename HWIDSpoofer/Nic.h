@@ -1,7 +1,7 @@
 #pragma once
 
 #include <ntifs.h>
-#include <ntddndis.h> // 这个必须放ntifs.h后面
+#include <ntddndis.h> // 锟斤拷锟斤拷锟斤拷锟斤拷ntifs.h锟斤拷锟斤拷
 
 #include "HWIDChanger.h"
 
@@ -60,12 +60,12 @@ namespace Nic
 	// dt ndis!_NDIS_FILTER_BLOCK
 
 	typedef struct _NDIS_FILTER_BLOCK {
-		UCHAR Header[8]; // 0x8
+		UCHAR Header[8]; // 0x0
 		struct _NDIS_FILTER_BLOCK* NextFilter; // 0x8
-		PVOID FilterDriver;	// 0x8
-		PVOID FilterModuleContext; // 0x8
-		PVOID Miniport; // 0x8
-		PKSTRING FilterInstanceName; // 0x8
+		PVOID FilterDriver;	// 0x10
+		PVOID FilterModuleContext; // 0x18
+		PVOID Miniport; // 0x20
+		PKSTRING FilterInstanceName; // 0x28
 		UCHAR _padding_2[0x288]; 
 		PNDIS_IF_BLOCK* IfBlock;
 	} NDIS_FILTER_BLOCK, * PNDIS_FILTER_BLOCK;
@@ -93,7 +93,7 @@ namespace Nic
 		   +0x030 ServiceRegPath   : _UNICODE_STRING
 		*/
 	typedef struct _NDIS_M_DRIVER_BLOCK {
-		NDIS_OBJECT_HEADER Header;		// 这里存在内存对齐，占用8字节
+		NDIS_OBJECT_HEADER Header;		
 		struct _NDIS_M_DRIVER_BLOCK* NextDriver;
 		struct _NDIS_M_DRIVER_BLOCK* MiniportQueue;
 		UCHAR MajorNdisVersion;
@@ -121,21 +121,11 @@ namespace Nic
 
 	private:
 
-		/// <summary>
-		/// 两种思路。
-		/// 一个是通过查找m_ndisGlobalFilterList 过滤器链表查找到每个驱动设备的实例名称，然后使用IoGetDeviceObjectPointer获取设备指针
-		/// 然后使用进行Hook DeviceControl 或则直接修改Mac地址(直接修改Mac地址目前存在值异常)
-		/// 第二个方法是直接找ndisMiniDriverList驱动链表，通过遍历驱动链表，直接进行Hook
-		/// </summary>
-		/// <returns></returns>
 		bool ChangeMacAddress() const;
 
 	private:
 		PVOID m_ndisBase = nullptr;
 
-		/// <summary>
-		/// ndisGlobalFilterList是一个全局的链表变量,用于维护系统中已注册的 NDIS 过滤器驱动程序的列表。
-		/// </summary>
 		PVOID m_ndisGlobalFilterList = nullptr;
 
 		PVOID m_ndisDummyIrpHandler = nullptr;

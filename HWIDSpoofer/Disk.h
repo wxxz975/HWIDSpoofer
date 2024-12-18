@@ -7,31 +7,33 @@ namespace Disk
 	typedef struct _TELEMETRY_UNIT_EXTENSION
 	{
 		/*
-			+0x000 Flags            : <anonymous-tag>
-			+0x000 DeviceHealthEventsLogged : Pos 0, 1 Bit
-			+0x000 FailedFirstSMARTCommand : Pos 1, 1 Bit
-			+0x000 FailedFirstDeviceStatisticsLogCommand : Pos 2, 1 Bit
-			+0x000 FailedFirstNvmeCloudSSDCommand : Pos 3, 1 Bit
-			+0x000 SmartPredictFailure : Pos 4, 1 Bit
-			+0x000 Reserved         : Pos 5, 27 Bits
-		 */
-		int SmartMask;
-	} TELEMETRY_UNIT_EXTENSION, * PTELEMETRY_UNIT_EXTENSION;
+				+0x000 Flags            : <anonymous-tag>
+				+0x000 DeviceHealthEventsLogged : Pos 0, 1 Bit
+				+0x000 FailedFirstSMARTCommand : Pos 1, 1 Bit
+				+0x000 FailedFirstDeviceStatisticsLogCommand : Pos 2, 1 Bit
+				+0x000 FailedFirstNvmeCloudSSDCommand : Pos 3, 1 Bit
+				+0x000 FailedFirstGetSupportedLogPagesCommand : Pos 4, 1 Bit
+				+0x000 SmartPredictFailure : Pos 5, 1 Bit
+				+0x000 Reserved         : Pos 6, 26 Bits
+				+0x004 NvmeCriticalWarning : UChar
+				+0x005 DeviceHealthPollCount : UChar
+			 */
+			int Flags;
+		} TELEMETRY_UNIT_EXTENSION, * PTELEMETRY_UNIT_EXTENSION;
 
-	// ------------------------------------------------
-	// storport.sys
-	// ------------------------------------------------
+		// ------------------------------------------------
+		// storport.sys
+		// ------------------------------------------------
+		typedef struct _STOR_SCSI_IDENTITY
+		{
+			char Space[0x8]; // +0x008 SerialNumber     : _STRING
+			STRING SerialNumber;
+		} STOR_SCSI_IDENTITY, * PSTOR_SCSI_IDENTITY;
 
-	typedef struct _STOR_SCSI_IDENTITY
-	{
-		char Space[0x8]; // +0x008 SerialNumber     : _STRING
-		STRING SerialNumber;
-	} STOR_SCSI_IDENTITY, * PSTOR_SCSI_IDENTITY;
-
-	// lkd> dt storport!_RAID_UNIT_EXTENSION -b
-	typedef struct _RAID_UNIT_EXTENSION
-	{
-		union
+		// lkd> dt storport!_RAID_UNIT_EXTENSION -b
+		typedef struct _RAID_UNIT_EXTENSION
+		{
+			union
 		{
 			struct
 			{

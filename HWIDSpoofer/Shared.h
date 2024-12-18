@@ -112,7 +112,7 @@ typedef struct _SYSTEM_MODULE_INFORMATION
 	SYSTEM_MODULE Modules[1];
 } SYSTEM_MODULE_INFORMATION, * PSYSTEM_MODULE_INFORMATION;
 
-// 这类链接不上的话多半就是没有写 extern "C"
+// 锟斤拷锟斤拷锟斤拷锟接诧拷锟较的伙拷锟斤拷锟斤拷锟斤拷没锟斤拷写 extern "C"
 extern "C"
 {
 	NTSTATUS ZwQuerySystemInformation(SYSTEM_INFORMATION_CLASS systemInformationClass, PVOID systemInformation, ULONG systemInformationLength, PULONG returnLength);

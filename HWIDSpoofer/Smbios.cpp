@@ -97,7 +97,7 @@ namespace Smbios
 		log("ntoskrnl.exe base:%llp\n", base);
 
 
-		/*  //¼ÓÉÏÕâÒ»¿é»á°ÑMacµØÖ·±äÎªÂÒÂë
+		/*  //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½Macï¿½ï¿½Ö·ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½
 		PVOID ExpBootEnvironmentInformationPtr = Utils::FindPatternImage(base, "\x0F\x10\x05\x00\x00\x00\x00\x0F\x11\x00\x8B", "xxx????xx?x");
 
 		Log::Print("ExpBootEnvironmentInformation ptr: %llp\n", ExpBootEnvironmentInformationPtr);
@@ -119,7 +119,10 @@ namespace Smbios
 		fffff800`1d733121 8b151ddf3f00    mov     edx,dword ptr [nt!WmipSMBiosTableLength (fffff800`1db31044)]
 		fffff800`1d733127 448d4304        lea     r8d,[rbx+4]
 		*/
-		auto* WmipSMBiosTablePhysicalAddressCall = static_cast<PPHYSICAL_ADDRESS>(Utils::FindPatternImage(base, "\x48\x8B\x0D\x00\x00\x00\x00\x48\x85\xC9\x74\x00\x8b\x15", "xxx????xxxx?xx")); // WmipFindSMBiosStructure -> WmipSMBiosTablePhysicalAddress
+		auto* WmipSMBiosTablePhysicalAddressCall = static_cast<PPHYSICAL_ADDRESS>(Utils::FindPatternImage(base, 
+			"\x48\x8B\x0D\x00\x00\x00\x00\x48\x85\xC9\x74\x00\x8b\x15", "xxx????xxxx?xx")); 
+		// WmipFindSMBiosStructure -> WmipSMBiosTablePhysicalAddress
+		
 		if (!WmipSMBiosTablePhysicalAddressCall)
 		{
 			err("Failed to find SMBIOS physical address!\n");
@@ -178,7 +181,7 @@ namespace Smbios
 
 		MmUnmapIoSpace(mapped, WmipSMBiosTableLength);
 
-#else // zero   ²éÑ¯smbiosµÄÊ±ºò»á·¢ÏÖÕÒ²»µ½ÊµÀý
+#else // zero   ï¿½ï¿½Ñ¯smbiosï¿½ï¿½Ê±ï¿½ï¿½á·¢ï¿½ï¿½ï¿½Ò²ï¿½ï¿½ï¿½Êµï¿½ï¿½
 
 memset(WmipSMBiosTablePhysicalAddress, 0, sizeof(PPHYSICAL_ADDRESS));
 #endif
@@ -247,7 +250,7 @@ memset(WmipSMBiosTablePhysicalAddress, 0, sizeof(PPHYSICAL_ADDRESS));
 
 
 		/*
-		*	Õâ¸öExpBootEnvironmentInformation ½á¹¹±»nt!ExpQuerySystemInformation+0xc88 ÄÚ²¿µ÷ÓÃ¹ý
+		*	ï¿½ï¿½ï¿½ExpBootEnvironmentInformation ï¿½á¹¹ï¿½ï¿½nt!ExpQuerySystemInformation+0xc88 ï¿½Ú²ï¿½ï¿½ï¿½ï¿½Ã¹ï¿½
 		* 
 		* fffff804`6b7fa4c8 e9410e0000      jmp     nt!ExpQuerySystemInformation+0x2fae (fffff804`6b7fb30e)
 			fffff804`6b7fa4cd e93c0e0000      jmp     nt!ExpQuerySystemInformation+0x2fae (fffff804`6b7fb30e)
@@ -289,12 +292,10 @@ memset(WmipSMBiosTablePhysicalAddress, 0, sizeof(PPHYSICAL_ADDRESS));
 			return false;
 		}
 
-		 // ÔÝÊ±Î´ÕÒµ½Õâ¸öº¯ÊýExpBootEnvironmentInformation
 		if (!ChangeBootInfo()) {
 			err("Failed to execute ChangeBootInfo!");
 			return false;
 		}
-
 
 		return true;
 	}
@@ -348,67 +349,91 @@ memset(WmipSMBiosTablePhysicalAddress, 0, sizeof(PPHYSICAL_ADDRESS));
 
 		if (header->Type == BIOS_INFO) {
 			auto* ptr = reinterpret_cast<PBIOSInfo>(header);
-			//ptr->BiosVersion
+			log("Handle Bios info. Vender:%s\n", GetString(header, ptr->Vendor));
 			auto* vendor = GetString(header, ptr->Vendor);
-			RandomizeString(vendor);
+			if(vendor) RandomizeString(vendor);
 		}
 
 		if (header->Type == SYSTEM_INFO)
 		{
 			auto* ptr = reinterpret_cast<PSystemInfo>(header);
+			auto* uuid = reinterpret_cast<UINT8*>(&ptr->UUID);
+			log("Handle SYSTEM Info. Manufacturer:%s, ProductName:%s, Version:%s, SerialNumber:%s, SKUNumber:%s\n",	
+				GetString(header, ptr->Manufacturer),
+				GetString(header, ptr->ProductName),
+				GetString(header, ptr->Version),
+				GetString(header, ptr->SerialNumber),
+				GetString(header, ptr->SKUNumber)
+				);
+			/*log("Handle SYSTEM Info. %02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x\n",
+				uuid[0], uuid[1], uuid[2], uuid[3],
+				uuid[4], uuid[5], uuid[6], uuid[7],
+				uuid[8], uuid[9], uuid[10], uuid[11],
+				uuid[12], uuid[13], uuid[14], uuid[15]);*/
 
 			auto* manufacturer = GetString(header, ptr->Manufacturer);
-			log("System manufacturer:%s\n", manufacturer);
-			RandomizeString(manufacturer);
-			
+			if(manufacturer) RandomizeString(manufacturer);
 
 			auto* productName = GetString(header, ptr->ProductName);
-			log("System productName:%s\n", productName);
-			RandomizeString(productName);
+			if(productName) RandomizeString(productName);
 
 			auto* serialNumber = GetString(header, ptr->SerialNumber);
-			log("System serialNumber:%s\n", serialNumber);
-			RandomizeString(serialNumber);
+			if(serialNumber) RandomizeString(serialNumber);
 
-			auto* uuid = reinterpret_cast<char*>(ptr->UUID);
-			log("System UUID:%s\n", uuid);
 			RtlZeroMemory(uuid, 16);
 		}
 
 		if (header->Type == BASEBOARD_INFO)
 		{
 			auto* ptr = reinterpret_cast<PBoardInfo>(header);
-
-			auto* manufacturer = GetString(header, ptr->Manufacturer);
-			log("BaseBoard manufacturer:%s\n", manufacturer);
-			RandomizeString(manufacturer);
+			log("Handle BASEBOARD Info. Manufacturer:%s, ProductName:%s, Version:%s, SerialNumber:%s, AssetTag:%s, LocationInChassis:%s\n",
+				GetString(header, ptr->Manufacturer),
+				GetString(header, ptr->ProductName),
+				GetString(header, ptr->Version),
+				GetString(header, ptr->SerialNumber),
+				GetString(header, ptr->AssetTag), 
+				GetString(header, ptr->LocationInChassis)
+			);
 			
+			auto* manufacturer = GetString(header, ptr->Manufacturer);
+			if(manufacturer) RandomizeString(manufacturer);
 
 			auto* productName = GetString(header, ptr->ProductName);
-			log("BaseBoard productName:%s\n", productName);
-			RandomizeString(productName);
+			if(productName) RandomizeString(productName);
 			
-			// ÕâÀï¶ÔÓ¦wmic bios get SerialNumber »ñÈ¡µÄÖµ
 			auto* serialNumber = GetString(header, ptr->SerialNumber);
-			log("BaseBoard serialNumber:%s\n", serialNumber);
-			RandomizeString(serialNumber);
-			
+			if(serialNumber) RandomizeString(serialNumber);
 		}
 		
 		
 		if (header->Type == PROCESSOR_INFO) {
 			auto* ptr = reinterpret_cast<PProcessorInfo>(header);
-			//TODO: ÐÞ¸ÄProcessorId£¬ ºÍ SerialNumber
+			log("Handle BASEBOARD Info. ProcessorManufacturer:%s, ProcessorVersion:%s, SerialNumber:%s, AssetTag:%s, PartNumber:%s\n",
+				GetString(header, ptr->ProcessorManufacturer),
+				GetString(header, ptr->ProcessorVersion),
+				GetString(header, ptr->SerialNumber),
+				GetString(header, ptr->AssetTag),
+				GetString(header, ptr->PartNumber)
+			);
+			auto* manufacturer = GetString(header, ptr->ProcessorManufacturer);
+			if(manufacturer) RandomizeString(manufacturer);
 
-
-			/*
 			auto* serialNumber = GetString(header, ptr->SerialNumber);
-			RandomizeString(serialNumber); // Õâ¸ö³¤¶È²»¶¨
-			*/
+			if(serialNumber) RandomizeString(serialNumber);
+		}
+
+		if (header->Type == MEMORY_DEVICE) {
+			auto* ptr = reinterpret_cast<PMemoryDevice>(header);
+			log("Handle MEMORY_DEVICE Info. Manufacturer:%s, SerialNumber:%s\n", 
+					GetString(header, ptr->Manufacturer),
+					GetString(header, ptr->SerialNumber)
+				);
+
+			auto* manufacturer = GetString(header, ptr->Manufacturer);
+			if(manufacturer) RandomizeString(manufacturer);
 			
-			auto* processorId = reinterpret_cast<char*>(ptr->ProcessorId);
-			RtlZeroMemory(processorId, 8);
-			//RandomizeString(processorId, 8); // Õâ¸ö²»ÊôÓÚ×Ö·û´®ÀàÐÍ²»ÄÜÊ¹ÓÃÕâ¸ö
+			auto* serialNumber = GetString(header, ptr->SerialNumber);
+			if(serialNumber) RandomizeString(serialNumber);
 		}
 
 		return STATUS_SUCCESS;
@@ -426,12 +451,13 @@ memset(WmipSMBiosTablePhysicalAddress, 0, sizeof(PPHYSICAL_ADDRESS));
 		while (true)
 		{
 			auto* header = static_cast<SMBIOS_HEADER*>(mapped);
-			if (header->Type > 127 && header->Length == 4)  // ÎÄµµÖÐ¹æ¶¨smbios Ö»±£ÁôÁË0-127µÄÀàÐÍ£¬²¢ÇÒÕâ¸öheader ±¾ÉíÕ¼ÓÃ4×Ö½Ú
+			if (header->Type > 127 && header->Length == 4) // 4 byte == header size
 				break;
 
 			ProcessTable(header);
+			
 			auto* end = static_cast<char*>(mapped) + header->Length;
-			while (0 != (*end | *(end + 1))) end++; // Á¬ÐøÁ½¸ö×Ö½ÚÊÇ\0¼´ÎªÒ»¸ö½á¹¹µÄ½áÊø·û
+			while (0 != (*end | *(end + 1))) end++;
 			end += 2;
 
 			if (end >= endAddress)

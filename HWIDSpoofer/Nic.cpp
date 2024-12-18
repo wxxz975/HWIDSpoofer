@@ -181,7 +181,7 @@ namespace Nic
 		}
 
 		PVOID ndisGlobalFilterListCalled = Utils::reinterpret<PVOID>(ndisReferenceFilterByHandle, 46);
-		m_ndisGlobalFilterList = Utils::translateAddress<PVOID>(ndisGlobalFilterListCalled, 7);
+		m_ndisGlobalFilterList = Utils::translateAddress<PVOID*>(ndisGlobalFilterListCalled, 7);
 		if (m_ndisGlobalFilterList == nullptr) {
 			log("Failed to find m_ndisGlobalFilterList!");
 			return false;
@@ -227,7 +227,7 @@ namespace Nic
 		m_ndisMiniDriverList = Utils::translateAddress<PVOID>(ndisGlobalFilterListCalled, 7);
 		
 
-
+		ShowAllAddress();
 		return true;
 	}
 
@@ -242,7 +242,6 @@ namespace Nic
 
 		if (!ChangeMacAddress()) {
 			err("Failed to Execute ChangeMacAddress!\n");
-			
 			return false;
 		}
 
@@ -267,43 +266,35 @@ namespace Nic
 		log("\n");
 	}
 
-	bool NICManager::ChangeMacAddress() const
-	{
-		// method 1
-		/* 这种方式hook之后可能会出现: 尝试写入只读内存
-		bool found = false;
-		for (PNDIS_M_DRIVER_BLOCK currentDriver = *reinterpret_cast<PNDIS_M_DRIVER_BLOCK*>(m_ndisMiniDriverList); 
-			currentDriver; currentDriver = currentDriver->NextDriver)
-		{
-			if (!currentDriver->DriverObject)
-				continue;
 
-			if (!currentDriver->DriverObject->MajorFunction)
-				continue;
+	DWORD Random(PDWORD seed) {
+		DWORD s = *seed * 1103515245 + 12345;
+		*seed = s;
+		return (s / 65536) % 32768;
+	}
 
-			
-			InterlockedExchangePointer(
-				(PVOID*)&currentDriver->DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL],
-				(PVOID)m_ndisDummyIrpHandler
-			);
-
-			found = true;
+	DWORD Hash(PBYTE buffer, DWORD length) {
+		if (!length) {
+			return 0;
 		}
 
-		return found;*/
-		
-		// method 2
-		
+		DWORD h = (*buffer ^ 0x4B9ACE3F) * 0x1040193;
+		for (DWORD i = 1; i < length; ++i) {
+			h = (buffer[i] ^ h) * 0x1040193;
+		}
+		return h;
+	}
+
+	bool NICManager::ChangeMacAddress() const
+	{
 		for (PNDIS_FILTER_BLOCK filter = *reinterpret_cast<PNDIS_FILTER_BLOCK*>(m_ndisGlobalFilterList); 
 			filter; 
 			filter = filter->NextFilter) 
 		{
+			PFILE_OBJECT file = nullptr;
+			PDEVICE_OBJECT device = nullptr;
+			PDRIVER_OBJECT driver = nullptr;
 
-			log("filter Addr:0x%llp\n", filter);
-			PNDIS_IF_BLOCK block = *filter->IfBlock;
-			
-			log("*block:%llx, block:%llx", block, filter->IfBlock);
-			
 			PWCHAR instanceName = reinterpret_cast<PWCHAR>(SafeCopy(filter->FilterInstanceName->Buffer, MAX_PATH));
 			if (instanceName == nullptr)  continue;
 
@@ -315,51 +306,22 @@ namespace Nic
 			UNICODE_STRING deviceName = { 0 };
 			RtlInitUnicodeString(&deviceName, adapter);
 
-			PFILE_OBJECT file = 0;
-			PDEVICE_OBJECT device = 0;
+			
 			NTSTATUS status = IoGetDeviceObjectPointer(&deviceName, FILE_READ_DATA, &file, &device);
 			if (!NT_SUCCESS(status)) {
 				err("Failed to find the device:%ws\n", deviceName.Buffer);
 				continue;
 			}
 			
-			PDRIVER_OBJECT driver = device->DriverObject;
+			driver = device->DriverObject;
 			if (driver == nullptr) {
 				err("Failed to find the driver Object!\n");
 				continue;
 			}
-			PVOID original = nullptr;
+
 			driver->MajorFunction[IRP_MJ_DEVICE_CONTROL] = reinterpret_cast<PDRIVER_DISPATCH>(m_ndisDummyIrpHandler);
-
-			/*
-			BOOL exists = FALSE;
-			for (DWORD i = 0; i < NICs.Length; ++i) {
-				if (NICs.Drivers[i].DriverObject == driver) {
-					exists = TRUE;
-					break;
-				}
-			}
-			if (exists) {
-				printf("%wZ already swapped\n", &driver->DriverName);
-			}
-			else {
-				PNIC_DRIVER nic = &NICs.Drivers[NICs.Length];
-				nic->DriverObject = driver;
-
-				AppendSwap(driver->DriverName, &driver->MajorFunction[IRP_MJ_DEVICE_CONTROL], NICControl, nic->Original);
-
-				++NICs.Length;
-			}
-				
 			ObDereferenceObject(file);
-			*/
-			// Current MAC
-			//PIF_PHYSICAL_ADDRESS_LH addr = &block->ifPhysAddress;
-			//Utils::SpoofBuffer(SEED, addr->Address, addr->Length);
-			//ShowMacAddress(addr);
-			//addr = &block->PermanentPhysAddress;
-			//Utils::SpoofBuffer(SEED, addr->Address, addr->Length);
-			//ShowMacAddress(addr);
+			log("Success Hook The nic:%ws\n", adapter);
 		}
 		return true;
 		

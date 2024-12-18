@@ -72,5 +72,8 @@
     <ClInclude Include="Gpu.h">
       <Filter>Component</Filter>
     </ClInclude>
+    <ClInclude Include="NVInfo.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

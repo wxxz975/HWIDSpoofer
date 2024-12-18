@@ -12,6 +12,15 @@ This project is a high-privilege Windows kernel driver that modifies the compute
 - **SmBios**: Randomize SmBios information. For customizing specific structures, refer to the reference manual
 - **GPU**: Randomize the serial number of the graphics card
 
+Tips:
+
+``````cmd
+net stop winmgmt
+net start winmgmt
+``````
+
+
+
 ## 3. Principle
 The principle of this project is to directly find the loaded hardware information memory values and modify them. Therefore, this approach has certain limitations, such as low compatibility, because the signature codes of different Windows kernel versions are inconsistent, but it is more secure.
 

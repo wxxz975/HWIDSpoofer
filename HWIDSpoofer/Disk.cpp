@@ -259,7 +259,6 @@ namespace Disk
 
 				status = STATUS_SUCCESS;
 				ExFreePool(buffer);
-
 				/*
 				 * On some devices DiskEnableDisableFailurePrediction will fail
 				 * Setting the bits directly will not fail and should work on any device
@@ -281,7 +280,7 @@ namespace Disk
 	 */
 	void DiskManager::DisableSmartBit(PRAID_UNIT_EXTENSION extension) const 
 	{
-		extension->_Smart.TelemetryExtension.SmartMask = 0;
+		extension->_Smart.TelemetryExtension.Flags = 0;
 	}
 
 };

@@ -5,15 +5,7 @@
 
 /*
 	nvidia-smi --query-gpu=index,name,serial,uuid,vbios_version,driver_version,pstate --format=csv
-	这个命令将查询显卡的以下信息：
-
-	index: 显卡的索引号
-	name: 显卡的名称
-	serial: 显卡的序列号
-	uuid: 显卡的唯一标识符（UUID）
-	vbios_version: 显卡的 VBIOS 版本
-	driver_version: 显卡驱动程序的版本
-	pstate: 显卡的性能状态
+	
 */
 namespace Gpu
 {
@@ -22,6 +14,7 @@ namespace Gpu
 	public:
 		GpuManager();
 		~GpuManager();
+		typedef uintptr_t(*GpuMgrGetGpuFromId)(int);
 
 		bool Initialize() override;
 		bool Execute()override;
@@ -36,6 +29,12 @@ namespace Gpu
 
 	private:
 		static PDRIVER_DISPATCH m_original_device_ctl;
+		PVOID m_nvlddmkmBase = nullptr;
+		PVOID m_gpuObject = nullptr;
+
+		GpuMgrGetGpuFromId m_gpuMgrGetGpuFromId = nullptr;
+		UINT32 m_UuidValidOffset = 0;
+		UINT32 m_gpuObjectOffset = 0;
 	};
 
 	

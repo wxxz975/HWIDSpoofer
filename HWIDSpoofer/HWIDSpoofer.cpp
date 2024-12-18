@@ -32,6 +32,12 @@ bool HWIDSpoofer::Initialize()
 		return false;
 	}
 	m_smbiosMgr.ShowAllAddress();
+
+	if (!m_gpuMgr.Initialize()) {
+		err("Error Init gpuManager!\n");
+		return false;
+	}
+	m_gpuMgr.ShowAllAddress();
 	
 	return true;
 }
@@ -49,12 +55,15 @@ bool HWIDSpoofer::Execute()
 		return false;
 	}
 
-	
 	if (!m_smbiosMgr.Execute ()) {
 		err("Error on Execute SmbiosManager\n");
 		return false;
 	}
 	
-	
+	/*if (!m_gpuMgr.Execute()) {
+		err("Error on Execute GpuManager\n");
+		return false;
+	}*/
+
 	return true;
 }
