@@ -13,7 +13,7 @@
 bool HWIDSpoofer::Initialize()
 {	
 	
-	if (!m_diskMgr.Initialize()) {
+	/*if (!m_diskMgr.Initialize()) {
 		err("Error Init DiskManager\n");
 		return false;
 	}
@@ -31,13 +31,13 @@ bool HWIDSpoofer::Initialize()
 		err("Error Init SmbiosManager\n");
 		return false;
 	}
-	m_smbiosMgr.ShowAllAddress();
+	m_smbiosMgr.ShowAllAddress();*/
 
 	if (!m_gpuMgr.Initialize()) {
 		err("Error Init gpuManager!\n");
 		return false;
 	}
-	m_gpuMgr.ShowAllAddress();
+	//m_gpuMgr.ShowAllAddress();
 	
 	return true;
 }

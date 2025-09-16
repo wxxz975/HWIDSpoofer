@@ -12,7 +12,7 @@ extern "C" NTSTATUS DriverEntry(PDRIVER_OBJECT pDrvObj, PUNICODE_STRING pRegistr
 	HWIDSpoofer spoofer;
 
 	if (spoofer.Initialize()) {
-		spoofer.Execute();
+		//spoofer.Execute();
 		log("HWIDSpoofer Success!\n");
 	}
 
